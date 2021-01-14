@@ -5,9 +5,7 @@ import (
 	"net/http"
 )
 
-type handleFun func(http.ResponseWriter, *http.Request)
-
-func root(kv KVS) handleFun {
+func root(kv KVS) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		key := fmt.Sprint(r.URL)[1:]
 		fmt.Printf("   (debug) key: '%v'\n", key)
@@ -28,7 +26,7 @@ func root(kv KVS) handleFun {
 	}
 }
 
-func shorten(kv KVS, hasher Hasher) handleFun {
+func shorten(kv KVS, hasher Hasher) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		url := fmt.Sprint(r.URL)[9:]
 		key := hasher.Hash(url)
@@ -50,7 +48,7 @@ func shorten(kv KVS, hasher Hasher) handleFun {
 	}
 }
 
-func stats() handleFun {
+func stats() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("TBD"))
 	}

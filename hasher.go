@@ -1,9 +1,9 @@
 package main
 
 import (
-	"crypto/sha1"
 	"encoding/base64"
 	"hash"
+	"hash/crc32"
 )
 
 type Hasher interface {
@@ -16,7 +16,7 @@ type MyHasher struct {
 }
 
 func NewMyHasher() MyHasher {
-	return MyHasher{sha1.New()}
+	return MyHasher{crc32.NewIEEE()}
 }
 
 func (h MyHasher) Hash(v string) string {

@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"sync"
+)
+
 type KVS interface {
 	// Store stores a key value pair.
 	Store(k, v string) error
@@ -8,31 +13,32 @@ type KVS interface {
 	Load(k string) (string, error)
 }
 
-type MyKVS map[string]string
+type MyKVS struct {
+	storage map[string]string
+	sync.RWMutex
+}
 
 func NewMyKVS() MyKVS {
-	return MyKVS{}
+	return MyKVS{storage: make(map[string]string)}
 }
 
 func (kvs MyKVS) Store(k, v string) error {
-	_, ok := kvs[k]
+	kvs.Lock()
+	defer kvs.Unlock()
+	_, ok := kvs.storage[k]
 	if ok {
-		return MyKVSError{"already exist"}
+		return fmt.Errorf("already exist")
 	}
-	kvs[k] = v
+	kvs.storage[k] = v
 	return nil
 }
 
 func (kvs MyKVS) Load(k string) (string, error) {
-	v, ok := kvs[k]
+	kvs.RLock()
+	defer kvs.RUnlock()
+	v, ok := kvs.storage[k]
 	if !ok {
-		return "", MyKVSError{"not found"}
+		return "", fmt.Errorf("not found")
 	}
 	return v, nil
-}
-
-type MyKVSError struct{ msg string }
-
-func (e MyKVSError) Error() string {
-	return e.msg
 }
