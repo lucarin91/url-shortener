@@ -1,14 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync/atomic"
 )
 
 func (s *Server) redirect(w http.ResponseWriter, r *http.Request) {
-	s.updateStats(Redirect)
-
 	key := fmt.Sprint(r.URL)[1:]
 	fmt.Printf("   (debug) key: '%v'\n", key)
 
@@ -31,8 +30,6 @@ func (s *Server) redirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) shorten(w http.ResponseWriter, r *http.Request) {
-	s.updateStats(Shorten)
-
 	url := fmt.Sprint(r.URL)[9:]
 	key := s.Hasher.Hash(url)
 	fmt.Printf("   (debug) url: '%v', key: '%v'\n", url, key)
@@ -47,24 +44,22 @@ func (s *Server) shorten(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "error: %v", e)
 		return
 	}
+	atomic.AddUint64(&s.Stats.TotalURL, 1)
 
 	fmt.Fprintf(w, "http://%v/%v", r.Host, key)
 }
 
 func (s *Server) statistics(w http.ResponseWriter, r *http.Request) {
-	s.updateStats(Statistics)
-
-	fmt.Fprintf(w, "URLs: %v\n", len(s.Kvs.storage))
-
-	fmt.Fprintf(w, "Redirect: %v\n", atomic.LoadUint64(&s.Stats.Redirects.Success))
-
-	fmt.Fprintf(w, "Handler:\n")
-	for _, v := range s.Stats.Handlers {
-		fmt.Fprintf(w, "  %v: %v\n", v.Name, atomic.LoadUint64(&v.Count))
+	if "json" == r.URL.Query().Get("format") {
+		e := json.NewEncoder(w)
+		e.SetIndent("", "  ")
+		e.Encode(s.Stats.Copy())
+	} else {
+		fmt.Fprintf(w, "URLs: %v\n", atomic.LoadUint64(&s.Stats.TotalURL))
+		fmt.Fprintf(w, "Redirect: %v\n", atomic.LoadUint64(&s.Stats.Redirects.Success))
+		fmt.Fprintf(w, "Handler:\n")
+		for _, v := range s.Stats.Handlers {
+			fmt.Fprintf(w, "  %v: %v\n", v.Name, atomic.LoadUint64(&v.Count))
+		}
 	}
-}
-
-func (s *Server) updateStats(i URLs) {
-	atomic.AddUint64(&s.Stats.ServerStats.TotalURL, 1)
-	atomic.AddUint64(&s.Stats.Handlers[i].Count, 1)
 }
