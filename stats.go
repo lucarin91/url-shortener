@@ -21,6 +21,8 @@ func (s *Stats) Copy() *Stats {
 	for i, v := range s.Handlers {
 		newS.Handlers[i] = Handler{v.Name, atomic.LoadUint64(&v.Count)}
 	}
+	// copy(newS.Handlers, s.Handlers)
+	// Will it use atomic operation internally?
 	return newS
 }
 
