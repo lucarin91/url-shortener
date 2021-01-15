@@ -8,8 +8,6 @@ import (
 )
 
 func (s *Server) redirect(w http.ResponseWriter, r *http.Request) {
-	atomic.AddUint64(&s.Stats.Handlers[Redirect].Count, 1)
-
 	key := fmt.Sprint(r.URL)[1:]
 	fmt.Printf("   (debug) key: '%v'\n", key)
 
@@ -32,8 +30,6 @@ func (s *Server) redirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) shorten(w http.ResponseWriter, r *http.Request) {
-	atomic.AddUint64(&s.Stats.Handlers[Shorten].Count, 1)
-
 	url := fmt.Sprint(r.URL)[9:]
 	key := s.Hasher.Hash(url)
 	fmt.Printf("   (debug) url: '%v', key: '%v'\n", url, key)
@@ -54,8 +50,6 @@ func (s *Server) shorten(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) statistics(w http.ResponseWriter, r *http.Request) {
-	atomic.AddUint64(&s.Stats.Handlers[Statistics].Count, 1)
-
 	if "json" == r.URL.Query().Get("format") {
 		e := json.NewEncoder(w)
 		e.SetIndent("", "  ")

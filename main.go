@@ -3,30 +3,26 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 )
 
-type Server struct {
-	Hasher MyHasher
-	Kvs    MyKVS
-	Stats  Stats
+func main() {
+	fmt.Println("Start...")
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
+	}
 }
 
-func main() {
-	server := &Server{
-		NewMyHasher(),
-		NewMyKVS(),
-		Stats{
-			ServerStats{Handlers: make([]Handler, 3)},
-		},
+func run() error {
+	s := NewServer()
+	http.HandleFunc("/", s.stat(Redirect, s.redirect))
+	http.HandleFunc("/shorten/", s.stat(Shorten, s.shorten))
+	http.HandleFunc("/statistics", s.stat(Statistics, s.statistics))
+
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		return fmt.Errorf("Http server: %w", err)
 	}
-	server.Stats.Handlers[Redirect] = Handler{"/", 0}
-	server.Stats.Handlers[Shorten] = Handler{"/shorten", 0}
-	server.Stats.Handlers[Statistics] = Handler{"/statistics", 0}
-
-	http.HandleFunc("/", server.redirect)
-	http.HandleFunc("/shorten/", server.shorten)
-	http.HandleFunc("/statistics", server.statistics)
-
-	fmt.Println("Start...")
-	http.ListenAndServe(":8080", nil)
+	return nil
 }
