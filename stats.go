@@ -2,12 +2,12 @@ package main
 
 type Stats struct {
 	ServerStats
-	Handlers []Handler
 }
 
 type ServerStats struct {
-	TotalURL uint64
-	Redirects
+	TotalURL  uint64
+	Redirects Redirects
+	Handlers  []Handler
 }
 
 type Redirects struct {
@@ -16,8 +16,8 @@ type Redirects struct {
 }
 
 type Handler struct {
-	name  string
-	count uint64
+	Name  string
+	Count uint64
 }
 
 type URLs int

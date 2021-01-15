@@ -5,27 +5,27 @@ import (
 	"net/http"
 )
 
-type State struct {
-	MyHasher
-	MyKVS
-	Stats
+type Server struct {
+	Hasher MyHasher
+	Kvs    MyKVS
+	Stats  Stats
 }
 
 func main() {
-	state := &State{NewMyHasher(),
+	server := &Server{
+		NewMyHasher(),
 		NewMyKVS(),
 		Stats{
-			ServerStats{},
-			make([]Handler, 3),
+			ServerStats{Handlers: make([]Handler, 3)},
 		},
 	}
-	state.Stats.Handlers[Redirect] = Handler{"/", 0}
-	state.Stats.Handlers[Shorten] = Handler{"/shorten", 0}
-	state.Stats.Handlers[Statistics] = Handler{"/statistics", 0}
+	server.Stats.Handlers[Redirect] = Handler{"/", 0}
+	server.Stats.Handlers[Shorten] = Handler{"/shorten", 0}
+	server.Stats.Handlers[Statistics] = Handler{"/statistics", 0}
 
-	http.HandleFunc("/", redirect(state))
-	http.HandleFunc("/shorten/", shorten(state))
-	http.HandleFunc("/statistics", statistics(state))
+	http.HandleFunc("/", server.redirect)
+	http.HandleFunc("/shorten/", server.shorten)
+	http.HandleFunc("/statistics", server.statistics)
 
 	fmt.Println("Start...")
 	http.ListenAndServe(":8080", nil)
