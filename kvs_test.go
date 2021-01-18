@@ -10,11 +10,8 @@ func TestKVS(t *testing.T) {
 		kvs := NewMyKVS()
 
 		_, err := kvs.Load("SjknVAAA")
-		if nil == err {
-			t.Fail()
-		}
-		if "not found" != err.Error() {
-			t.Fail()
+		if errNotFound != err {
+			t.Errorf("got %q, want %q", err, errNotFound)
 		}
 	})
 
@@ -23,7 +20,7 @@ func TestKVS(t *testing.T) {
 
 		err := kvs.Store("SjknVAAA", "golang.org")
 		if nil != err {
-			t.Fail()
+			t.Errorf("got %q, want %q", err, "nil")
 		}
 	})
 
@@ -32,11 +29,8 @@ func TestKVS(t *testing.T) {
 
 		kvs.Store("SjknVAAA", "golang.org")
 		err := kvs.Store("SjknVAAA", "golang.org")
-		if nil == err {
-			t.Fail()
-		}
-		if "already exist" != err.Error() {
-			t.Fail()
+		if errAlreadyExists != err {
+			t.Errorf("got %q, want %q", err, errAlreadyExists)
 		}
 	})
 
@@ -46,10 +40,10 @@ func TestKVS(t *testing.T) {
 		err := kvs.Store("SjknVAAA", "golang.org")
 		v, err := kvs.Load("SjknVAAA")
 		if nil != err {
-			t.Fail()
+			t.Errorf("got %q, want %q", err, "nil")
 		}
 		if "golang.org" != v {
-			t.Fail()
+			t.Errorf("got %q, want %q", v, "golang.org")
 		}
 	})
 }

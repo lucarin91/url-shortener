@@ -19,14 +19,14 @@ func TestStat(t *testing.T) {
 	s.stat(Statistics, func(w http.ResponseWriter, r *http.Request) {})(w, req)
 
 	if 2 != s.Stats.Handlers[Redirect].Count {
-		t.Fail()
+		t.Errorf("got %v, want %v", s.Stats.Handlers[Redirect].Count, 2)
 	}
 
 	if 3 != s.Stats.Handlers[Shorten].Count {
-		t.Fail()
+		t.Errorf("got %v, want %v", s.Stats.Handlers[Shorten].Count, 3)
 	}
 
 	if 4 != s.Stats.Handlers[Statistics].Count {
-		t.Fail()
+		t.Errorf("got %v, want %v", s.Stats.Handlers[Statistics].Count, 4)
 	}
 }

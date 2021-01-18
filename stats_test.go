@@ -1,32 +1,28 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 )
 
 func TestStatsCopy(t *testing.T) {
-	s := Stats{
+	s := &Stats{
 		ServerStats{
-			1,
-			Redirects{
-				2,
-				3,
+			TotalURL: 1,
+			Redirects: Redirects{
+				Success: 2,
+				Failed:  3,
 			},
-			[]Handler{Handler{"qwe", 4}, Handler{"qwee", 5}, Handler{"qweee", 6}},
+			Handlers: []Handler{
+				Handler{Name: "qwe", Count: 4},
+				Handler{Name: "qwee", Count: 5},
+				Handler{Name: "qweee", Count: 6},
+			},
 		},
 	}
 	newS := s.Copy()
 
-	if s.TotalURL != newS.TotalURL ||
-		s.Redirects.Failed != newS.Redirects.Failed ||
-		s.Redirects.Success != newS.Redirects.Success {
-		t.Fail()
-	}
-
-	for i, v := range s.Handlers {
-		if newS.Handlers[i].Name != v.Name ||
-			newS.Handlers[i].Count != v.Count {
-			t.Fail()
-		}
+	if !reflect.DeepEqual(s, newS) {
+		t.Errorf("got %+v, want %+v", newS, s)
 	}
 }

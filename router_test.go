@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
@@ -17,14 +18,11 @@ func TestRedirect(t *testing.T) {
 		s.redirect(w, req)
 
 		resp := w.Result()
-		body, _ := ioutil.ReadAll(resp.Body)
 
 		if http.StatusBadRequest != resp.StatusCode {
-			t.Fail()
+			t.Errorf("got %q, want %q", resp.StatusCode, http.StatusBadRequest)
 		}
-		if "error: invalid url" != string(body) {
-			t.Fail()
-		}
+
 	})
 
 	t.Run("not found", func(t *testing.T) {
@@ -35,13 +33,9 @@ func TestRedirect(t *testing.T) {
 		s.redirect(w, req)
 
 		resp := w.Result()
-		body, _ := ioutil.ReadAll(resp.Body)
 
 		if http.StatusNotFound != resp.StatusCode {
-			t.Fail()
-		}
-		if "error: not found" != string(body) {
-			t.Fail()
+			t.Errorf("got %q, want %q", resp.StatusCode, http.StatusNotFound)
 		}
 	})
 
@@ -55,10 +49,10 @@ func TestRedirect(t *testing.T) {
 
 		resp := w.Result()
 		if http.StatusMovedPermanently != resp.StatusCode {
-			t.Fail()
+			t.Errorf("got %v, want %v", resp.StatusCode, http.StatusMovedPermanently)
 		}
 		if "http://value1" != resp.Header.Get("Location") {
-			t.Fail()
+			t.Errorf("got %q, want %q", resp.Header.Get("Location"), "http://value1")
 		}
 	})
 
@@ -79,13 +73,9 @@ func TestShorten(t *testing.T) {
 		s.shorten(w, req)
 
 		resp := w.Result()
-		body, _ := ioutil.ReadAll(resp.Body)
 
 		if http.StatusBadRequest != resp.StatusCode {
-			t.Fail()
-		}
-		if "error: invalid url" != string(body) {
-			t.Fail()
+			t.Errorf("got %v, want %v", resp.StatusCode, http.StatusBadRequest)
 		}
 	})
 
@@ -99,13 +89,9 @@ func TestShorten(t *testing.T) {
 		s.shorten(w, req)
 
 		resp := w.Result()
-		body, _ := ioutil.ReadAll(resp.Body)
 
 		if http.StatusBadRequest != resp.StatusCode {
-			t.Fail()
-		}
-		if "error: already exist" != string(body) {
-			t.Fail()
+			t.Errorf("got %v, want %v", resp.StatusCode, http.StatusBadRequest)
 		}
 	})
 
@@ -121,10 +107,10 @@ func TestShorten(t *testing.T) {
 		body, _ := ioutil.ReadAll(resp.Body)
 
 		if http.StatusOK != resp.StatusCode {
-			t.Fail()
+			t.Errorf("got %v, want %v", resp.StatusCode, http.StatusOK)
 		}
 		if "http://example.com/keykey12" != string(body) {
-			t.Fail()
+			t.Errorf("got %q, want %q", string(body), "http://example.com/keykey12")
 		}
 	})
 
@@ -148,7 +134,7 @@ func TestStatistics(t *testing.T) {
 		body, _ := ioutil.ReadAll(resp.Body)
 
 		if http.StatusOK != resp.StatusCode {
-			t.Fail()
+			t.Errorf("got %v, want %v", resp.StatusCode, http.StatusOK)
 		}
 		r := "URLs: 1\n" +
 			"Redirect: 3\n" +
@@ -157,7 +143,7 @@ func TestStatistics(t *testing.T) {
 			"  /shorten: 5\n" +
 			"  /statistics: 6\n"
 		if r != string(body) {
-			t.Fail()
+			t.Errorf("got %v, want %v", string(body), r)
 		}
 	})
 
@@ -178,11 +164,13 @@ func TestStatistics(t *testing.T) {
 		body, _ := ioutil.ReadAll(resp.Body)
 
 		if http.StatusOK != resp.StatusCode {
-			t.Fail()
+			t.Errorf("got %v, want %v", resp.StatusCode, http.StatusOK)
 		}
-		r, _ := json.MarshalIndent(s.Stats, "", "  ")
-		if string(r)+"\n" != string(body) {
-			t.Fail()
+
+		res := Stats{}
+		json.Unmarshal(body, &res)
+		if !reflect.DeepEqual(&s.Stats, &res) {
+			t.Errorf("got %+v, want %+v", res, s.Stats)
 		}
 	})
 }
