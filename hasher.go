@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/binary"
 	"hash"
 	"hash/crc32"
 )
@@ -12,7 +13,7 @@ type Hasher interface {
 }
 
 type MyHasher struct {
-	hasher hash.Hash
+	hasher hash.Hash32
 }
 
 func NewMyHasher() MyHasher {
@@ -20,7 +21,10 @@ func NewMyHasher() MyHasher {
 }
 
 func (h MyHasher) Hash(v string) string {
-	shaHash := h.hasher.Sum([]byte(v))
-	str := base64.URLEncoding.EncodeToString(shaHash)
+	h.hasher.Write([]byte(v))
+	b := make([]byte, 8)
+	binary.LittleEndian.PutUint32(b, h.hasher.Sum32())
+	h.hasher.Reset()
+	str := base64.URLEncoding.EncodeToString(b)
 	return str[:8]
 }
