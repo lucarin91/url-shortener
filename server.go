@@ -1,8 +1,8 @@
 package main
 
 type Server struct {
-	Hasher MyHasher
-	Kvs    MyKVS
+	Hasher Hasher
+	Kvs    KVS
 	Stats  Stats
 }
 
