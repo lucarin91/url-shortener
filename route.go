@@ -3,15 +3,17 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sync/atomic"
 )
 
 func (s *Server) redirect(w http.ResponseWriter, r *http.Request) {
 	key := fmt.Sprint(r.URL)[1:]
-	fmt.Printf("   (debug) key: '%v'\n", key)
+	log.Printf("(debug) [redirect] key: '%v'\n", key)
 
 	if len(key) != 8 {
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "error: invalid url")
 		return
 	}
@@ -19,28 +21,31 @@ func (s *Server) redirect(w http.ResponseWriter, r *http.Request) {
 	url, e := s.Kvs.Load(key)
 	if e != nil {
 		atomic.AddUint64(&s.Stats.Redirects.Failed, 1)
+		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "error: %v", e)
 		return
 	}
 	atomic.AddUint64(&s.Stats.Redirects.Success, 1)
 
 	url = fmt.Sprintf("http://%v", url)
-	fmt.Printf("   (debug) redirect to: '%v'\n", url)
+	log.Printf("(debug) [redirect] redirect to: '%v'\n", url)
 	http.Redirect(w, r, url, http.StatusMovedPermanently)
 }
 
 func (s *Server) shorten(w http.ResponseWriter, r *http.Request) {
 	url := fmt.Sprint(r.URL)[9:]
 	key := s.Hasher.Hash(url)
-	fmt.Printf("   (debug) url: '%v', key: '%v'\n", url, key)
+	log.Printf("(debug) [shorten] url: '%v', key: '%v'\n", url, key)
 
 	if len(url) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "error: invalid url")
 		return
 	}
 
 	e := s.Kvs.Store(key, url)
 	if e != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "error: %v", e)
 		return
 	}
