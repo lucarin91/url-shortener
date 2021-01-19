@@ -1,10 +1,23 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 )
 
-func TestKVS(t *testing.T) {
+func TestKVSLoad(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		kvs := NewMyKVS()
+
+		err := kvs.Store("SjknVAAA", "golang.org")
+		v, err := kvs.Load("SjknVAAA")
+		if nil != err {
+			t.Errorf("got %q, want %q", err, "nil")
+		}
+		if "golang.org" != v {
+			t.Errorf("got %q, want %q", v, "golang.org")
+		}
+	})
 
 	t.Run("not found", func(t *testing.T) {
 		kvs := NewMyKVS()
@@ -14,8 +27,10 @@ func TestKVS(t *testing.T) {
 			t.Errorf("got %q, want %q", err, errNotFound)
 		}
 	})
+}
 
-	t.Run("store", func(t *testing.T) {
+func TestKVSStore(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
 		kvs := NewMyKVS()
 
 		err := kvs.Store("SjknVAAA", "golang.org")
@@ -33,17 +48,23 @@ func TestKVS(t *testing.T) {
 			t.Errorf("got %q, want %q", err, errAlreadyExists)
 		}
 	})
+}
 
-	t.Run("load", func(t *testing.T) {
-		kvs := NewMyKVS()
+func TestKVSDump(t *testing.T) {
+	kvs := NewMyKVS()
+	kvs.storage["key1"] = "url1"
+	kvs.storage["key2"] = "url2"
+	kvs.storage["key3"] = "url3"
+	kvs.storage["key4"] = "url4"
+	kvs.storage["key5"] = "url5"
 
-		err := kvs.Store("SjknVAAA", "golang.org")
-		v, err := kvs.Load("SjknVAAA")
-		if nil != err {
-			t.Errorf("got %q, want %q", err, "nil")
-		}
-		if "golang.org" != v {
-			t.Errorf("got %q, want %q", v, "golang.org")
-		}
-	})
+	stg := kvs.Dump()
+	check := make(map[string]string)
+	for _, v := range stg.URLPairs {
+		check[v.Short] = v.Long
+	}
+
+	if !reflect.DeepEqual(kvs.storage, check) {
+		t.Errorf("got %q, want %q", kvs.storage, check)
+	}
 }

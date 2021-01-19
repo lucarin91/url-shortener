@@ -34,3 +34,7 @@ func (s *Server) SetStorage(stg *Storage) error {
 	s.Stats.TotalURL = uint64(len(stg.URLPairs))
 	return nil
 }
+
+func (s *Server) Storage() *Storage {
+	return s.Kvs.Dump()
+}
