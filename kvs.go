@@ -11,6 +11,9 @@ type KVS interface {
 
 	// Load returns the value associated with a given key.
 	Load(k string) (string, error)
+
+	// Dump the internal storage
+	Dump() *Storage
 }
 
 type MyKVS struct {
@@ -44,4 +47,16 @@ func (kvs MyKVS) Load(k string) (string, error) {
 		return "", errNotFound
 	}
 	return v, nil
+}
+
+func (kvs MyKVS) Dump() *Storage {
+	kvs.Lock()
+	defer kvs.Unlock()
+	stg := Storage{URLPairs: make([]URLPair, len(kvs.storage))}
+	var i uint64
+	for key, value := range kvs.storage {
+		stg.URLPairs[i] = URLPair{Short: key, Long: value}
+		i++
+	}
+	return &stg
 }

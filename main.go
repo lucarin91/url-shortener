@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -20,7 +21,7 @@ func main() {
 	flag.Parse()
 
 	if err := run(&args); err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
+		fmt.Fprintf(os.Stderr, "[ERR] %s\n", err)
 		os.Exit(1)
 	}
 }
@@ -30,17 +31,27 @@ func run(args *cmdArgs) error {
 
 	// Load storage from file
 	stg, err := LoadStorageFile(args.file)
-	if err != nil {
+	var e *os.PathError
+	switch {
+	// OK, load storage file on the server
+	case err == nil:
+		err = s.SetStorage(stg)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("[INFO] Load %d from storage file %q\n", s.Stats.TotalURL, args.file)
+	// File not exist, ignored
+	case errors.As(err, &e) && os.IsNotExist(e):
+		fmt.Printf("[WARN] Storage file %q not exist\n", args.file)
+	// Other error, i.e., permission
+	default:
 		return err
 	}
-	// Set storage on the server
-	err = s.SetStorage(stg)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("[INFO] Load %d from storage file %q\n", s.Stats.TotalURL, args.file)
 
-	// Configure handler
+	// Handle graceful shoutdown
+	s.ShutdownHandler(args)
+
+	// Configure http handlers
 	http.HandleFunc("/", s.stat(Redirect, s.redirect))
 	http.HandleFunc("/shorten/", s.stat(Shorten, s.shorten))
 	http.HandleFunc("/statistics", s.stat(Statistics, s.statistics))
