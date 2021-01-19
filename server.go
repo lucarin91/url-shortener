@@ -24,11 +24,11 @@ func NewServer() *Server {
 	return s
 }
 
-func (s *Server) LoadStorage(stg *Storage) error {
+func (s *Server) SetStorage(stg *Storage) error {
 	for _, v := range stg.URLPairs {
 		err := s.Kvs.Store(v.Short, v.Long)
 		if err != nil {
-			return fmt.Errorf("cannot load url: %w", err)
+			return fmt.Errorf("cannot load url: %v", err)
 		}
 	}
 	s.Stats.TotalURL = uint64(len(stg.URLPairs))

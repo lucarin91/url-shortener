@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 )
 
 type Storage struct {
@@ -16,14 +16,15 @@ type URLPair struct {
 }
 
 func LoadStorageFile(path string) (*Storage, error) {
-	data, err := ioutil.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open storage file %q: %w", path, err)
+		return nil, fmt.Errorf("cannot open storage file %q: %v", path, err)
 	}
 	var stg Storage
-	err = json.Unmarshal(data, &stg)
+	e := json.NewDecoder(f)
+	err = e.Decode(&stg)
 	if err != nil {
-		return nil, fmt.Errorf("cannot decode storage file %q: %w", path, err)
+		return nil, fmt.Errorf("cannot decode storage file %q: %v", path, err)
 	}
 	return &stg, nil
 }

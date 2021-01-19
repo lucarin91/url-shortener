@@ -7,48 +7,48 @@ import (
 	"os"
 )
 
-var (
+type cmdArgs struct {
 	addr string
 	file string
-)
-
-func init() {
-	flag.StringVar(&addr, "addr", ":8080", "server address")
-	flag.StringVar(&file, "load", "storage.json", "path to storage file")
 }
 
 func main() {
+	// Read command arguments
+	var args cmdArgs
+	flag.StringVar(&args.addr, "addr", ":8080", "server address")
+	flag.StringVar(&args.file, "load", "storage.json", "path to storage file")
 	flag.Parse()
 
-	if err := run(); err != nil {
+	if err := run(&args); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(args *cmdArgs) error {
 	s := NewServer()
 
-	_, err := os.Stat(file)
-	if err == nil {
-		stg, err := LoadStorageFile(file)
-		if err != nil {
-			return err
-		}
-		s.LoadStorage(stg)
-		fmt.Printf("[INFO] Load %d from storage file %q\n", s.Stats.TotalURL, file)
-	} else {
-		fmt.Printf("[WARN] Storage file %q not found\n", file)
+	// Load storage from file
+	stg, err := LoadStorageFile(args.file)
+	if err != nil {
+		return err
 	}
+	// Set storage on the server
+	err = s.SetStorage(stg)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("[INFO] Load %d from storage file %q\n", s.Stats.TotalURL, args.file)
 
+	// Configure handler
 	http.HandleFunc("/", s.stat(Redirect, s.redirect))
 	http.HandleFunc("/shorten/", s.stat(Shorten, s.shorten))
 	http.HandleFunc("/statistics", s.stat(Statistics, s.statistics))
 
-	fmt.Printf("Start on %q\n", addr)
-	err = http.ListenAndServe(addr, nil)
+	fmt.Printf("Start on %q\n", args.addr)
+	err = http.ListenAndServe(args.addr, nil)
 	if err != nil {
-		return fmt.Errorf("Http server: %w", err)
+		return fmt.Errorf("Http server: %v", err)
 	}
 	return nil
 }
