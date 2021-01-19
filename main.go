@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 )
 
 type cmdArgs struct {
@@ -29,29 +30,34 @@ func main() {
 func run(args *cmdArgs) error {
 	s := NewServer()
 
-	// Load storage from file
 	stg, err := LoadStorageFile(args.file)
 	var e *os.PathError
 	switch {
-	// OK, load storage file on the server
 	case err == nil:
+		// OK, load storage file on the server
 		err = s.SetStorage(stg)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("[INFO] Load %d from storage file %q\n", s.Stats.TotalURL, args.file)
-	// File not exist, ignored
 	case errors.As(err, &e) && os.IsNotExist(e):
+		// File not exist, ignored
 		fmt.Printf("[WARN] Storage file %q not exist\n", args.file)
-	// Other error, i.e., permission
 	default:
+		// Other error, i.e., permission
 		return err
 	}
 
-	// Handle graceful shoutdown
-	s.ShutdownHandler(args)
+	signalHandler(func() {
+		err := s.Storage().SaveStorageFile(args.file)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Cannot save storage: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Save storage")
+		os.Exit(0)
+	})
 
-	// Configure http handlers
 	http.HandleFunc("/", s.stat(Redirect, s.redirect))
 	http.HandleFunc("/shorten/", s.stat(Shorten, s.shorten))
 	http.HandleFunc("/statistics", s.stat(Statistics, s.statistics))
@@ -62,4 +68,13 @@ func run(args *cmdArgs) error {
 		return fmt.Errorf("Http server: %v", err)
 	}
 	return nil
+}
+
+func signalHandler(cb func()) {
+	termChan := make(chan os.Signal)
+	signal.Notify(termChan, os.Interrupt, os.Kill)
+	go func() {
+		<-termChan // Blocks here until interrupted
+		cb()
+	}()
 }

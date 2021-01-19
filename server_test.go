@@ -25,7 +25,7 @@ func TestSetStorage(t *testing.T) {
 				t.Errorf("key %q not found", v.Short)
 			}
 		}
-		if len(stg.URLPairs) != int(s.Stats.TotalURL) {
+		if 4 != s.Stats.TotalURL || len(stg.URLPairs) != int(s.Stats.TotalURL) {
 			t.Errorf("got %v, want %v", len(stg.URLPairs), int(s.Stats.TotalURL))
 		}
 	})

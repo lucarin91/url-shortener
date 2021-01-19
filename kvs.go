@@ -52,11 +52,9 @@ func (kvs MyKVS) Load(k string) (string, error) {
 func (kvs MyKVS) Dump() *Storage {
 	kvs.Lock()
 	defer kvs.Unlock()
-	stg := Storage{URLPairs: make([]URLPair, len(kvs.storage))}
-	var i uint64
+	stg := Storage{URLPairs: make([]URLPair, 0, len(kvs.storage))}
 	for key, value := range kvs.storage {
-		stg.URLPairs[i] = URLPair{Short: key, Long: value}
-		i++
+		stg.URLPairs = append(stg.URLPairs, URLPair{Short: key, Long: value})
 	}
 	return &stg
 }
