@@ -21,14 +21,14 @@ type MyKVS struct {
 	sync.RWMutex
 }
 
-func NewMyKVS() MyKVS {
-	return MyKVS{storage: make(map[string]string)}
+func NewMyKVS() *MyKVS {
+	return &MyKVS{storage: make(map[string]string)}
 }
 
 var errAlreadyExists = errors.New("can't add entry: already exists")
 var errNotFound = errors.New("can't load entry: not found")
 
-func (kvs MyKVS) Store(k, v string) error {
+func (kvs *MyKVS) Store(k, v string) error {
 	kvs.Lock()
 	defer kvs.Unlock()
 	_, ok := kvs.storage[k]
@@ -39,7 +39,7 @@ func (kvs MyKVS) Store(k, v string) error {
 	return nil
 }
 
-func (kvs MyKVS) Load(k string) (string, error) {
+func (kvs *MyKVS) Load(k string) (string, error) {
 	kvs.RLock()
 	defer kvs.RUnlock()
 	v, ok := kvs.storage[k]
@@ -49,7 +49,7 @@ func (kvs MyKVS) Load(k string) (string, error) {
 	return v, nil
 }
 
-func (kvs MyKVS) Dump() *Storage {
+func (kvs *MyKVS) Dump() *Storage {
 	kvs.Lock()
 	defer kvs.Unlock()
 	stg := Storage{URLPairs: make([]URLPair, 0, len(kvs.storage))}
