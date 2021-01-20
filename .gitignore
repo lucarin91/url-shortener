@@ -14,5 +14,10 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# persistent storage file
+# Persistent storage file
 storage.json
+urls.json
+
+# Binaries
+shortly/shortly
+e2e/e2e
