@@ -14,7 +14,7 @@ const shortlyURL = "http://localhost:8080"
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "\n  Error: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -27,14 +27,17 @@ func run() error {
 		return fmt.Errorf("cannot init storage: %v", err)
 	}
 
-	// Start shortly server
+	fmt.Println("\n  Start server")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	cmd := exec.CommandContext(ctx, shortlyPath, "--load", urlsPath)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
 		return err
 	}
 	time.Sleep(1 * time.Second)
+	fmt.Println("  OK!")
 
 	// Test server
 	if err := CheckWrongRedirect("/H7DFLQAA"); err != nil {
@@ -63,13 +66,14 @@ func run() error {
 		return err
 	}
 
-	// Terminate Server
+	fmt.Println("\n  Interrupt server")
 	if err := cmd.Process.Signal(os.Interrupt); err != nil {
 		return err
 	}
 	if err := cmd.Wait(); err != nil {
-		return err
+		return fmt.Errorf("error waiting for child process: %v", err)
 	}
+	fmt.Println("  OK!")
 
 	var finalStorage = &Storage{URLPairs: []URLPair{
 		URLPair{Short: "R7W7LQAA", Long: "golang.org"},

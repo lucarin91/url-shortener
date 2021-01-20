@@ -17,7 +17,7 @@ func CheckWrongRedirect(url string) error {
 	if r.StatusCode != http.StatusNotFound {
 		return fmt.Errorf("code %v, want %v", r.StatusCode, http.StatusBadRequest)
 	}
-	fmt.Println("OK!")
+	fmt.Println("  OK!")
 	return nil
 }
 
@@ -33,7 +33,7 @@ func CheckGoodRedirect(short, long string) error {
 	if u.Host != r.Request.URL.Host || u.Path != r.Request.URL.Path {
 		return fmt.Errorf("redirect to %q, want %q", r.Request.URL, long)
 	}
-	fmt.Println("OK!")
+	fmt.Println("  OK!")
 	return nil
 }
 
@@ -50,7 +50,7 @@ func CheckShortURL(url string) (string, error) {
 		return "", err
 	}
 	r.Body.Close()
-	fmt.Println("OK!")
+	fmt.Println("  OK!")
 	return string(body)[len(shortlyURL):], nil
 }
 
@@ -72,12 +72,12 @@ func CheckSatistics(statsCheck *Stats) error {
 	if !reflect.DeepEqual(statsCheck, &stats) {
 		return fmt.Errorf("statistics %+v,\n want %+v", statsCheck, stats)
 	}
-	fmt.Println("OK!")
+	fmt.Println("  OK!")
 	return nil
 }
 
 func CheckStorage(finalStorage *Storage) error {
-	fmt.Println("Check storage")
+	fmt.Println("\n  Check storage")
 	stg, err := LoadStorageFile(urlsPath)
 	if err != nil {
 		return err
@@ -86,11 +86,11 @@ func CheckStorage(finalStorage *Storage) error {
 	if !stg.Equal(finalStorage) {
 		return fmt.Errorf("storage %+v, want %+v", stg, finalStorage)
 	}
-	fmt.Println("OK!")
+	fmt.Println("  OK!")
 	return nil
 }
 
 func logGet(url string) (*http.Response, error) {
-	fmt.Printf("GET: %v\n", url)
+	fmt.Printf("\n  GET: %v\n", url)
 	return http.Get(url)
 }
